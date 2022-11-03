@@ -103,7 +103,7 @@ classDiagram
 
 ```mermaid
 classDiagram
-    ArkhamHorrorView <|-- ArkhamHorrorView_GUI
+    ArkhamHorrorView <|-- ArkhamHorrorGUIView
     class ArkhamHorrorView{
         <<abstract>>
         +ArkhamHorrorController controller
@@ -112,15 +112,32 @@ classDiagram
         +List~string~ investigators
     }
     
-    ArkhamHorrorView_GUI *-- MainMenuView
-    ArkhamHorrorView_GUI *-- TableTopView
-    class ArkhamHorrorView_GUI{
+    tkinter_Tk <|-- ArkhamHorrorGUIView
+
+    ArkhamHorrorGUIView *-- MainMenuView
+    ArkhamHorrorGUIView *-- TableTopView
+    class ArkhamHorrorGUIView{
         -MainMenuView main_menu
         -TableTopView tabletop
         +run()
         -load_new_game_selection()
         -load_main_menu()
         -load_tabletop(string campaign, string part, List~string~ investigators, string scenariocard_path, List~string~ agendadeck_paths, List~string~ actdeck_paths, List~string~ encounterdeck_paths, List~string~ location_paths, List~string~ investigatorcard_paths, List~string~ playerdeck_paths)
+    }
+
+    tkinter_Frame <|-- GUISubView
+
+    GUISubView <|-- MainMenuView
+    GUISubView <|-- TableTopView
+    GUISubView <|-- AreaView
+    GUISubView <|-- CardView
+    GUISubView <|-- CounterView
+    GUISubView <|-- CardArrayView
+    GUISubView <|-- DeckPanelView
+    class GUISubView{
+        <<abstract>>
+        -ArkhamHorrorController controller
+        +__int__(controller)
     }
     
     class MainMenuView{
@@ -166,11 +183,13 @@ classDiagram
     EncounterAreaView -- DeckView
     EncounterAreaView -- DeckPanelView
     class EncounterAreaView{
+        -ArkhamHorrorController controller
         -CardView scenario_card
         -DeckView agenda_deck
         -DeckView act_deck
         -CounterView doom_counter
         -DeckPanelView encounter_deck
+        +__init__(controller, ...)
     }
     
     class LocationAreaView{
@@ -203,10 +222,12 @@ classDiagram
     CardView <|-- DeckView
     CardView <|-- LocationCardView
     class CardView{
-        -string title
+        -string view_title
+        -string name
         -bool is_portrait_orientation=True
         -bool is_facedown=True
         -bool can_flip=False
+        +__init__(controller, name, front_image=None, back_image=None)
         +flip()
     }
     
@@ -216,10 +237,12 @@ classDiagram
         -CounterView clue_counter
     }
     
+    DeckView <|-- ScenarioDeckView
     class DeckView{
-        +__init__()
+        -ArkhamHorrorController controller
         -bool can_shuffle=True
         -bool can_select=True
+        +__init__(controller)
         +draw()
         +shuffle()
         +select()
@@ -253,10 +276,13 @@ classDiagram
     class ArkhamHorrorController{
         -ArkhamHorrorModel model
         -ArkhamHorrorView view
+        -Dict~string, Model.Deck~ decks
         -Setup setup
         +run()
         +play_new_game(string campaign_name, string part_name, List~string~ investigators, string difficulty)
         -get_setup() Setup
+        +shuffle_deck(string deck_name)
+        +draw_from_deck(string deck_name) Tuple image_frontpath_backpath
     }
 
     class Setup{
@@ -323,4 +349,12 @@ View ->> View: load_new_game_selection()
         View ->>+ View: load_tabletop()
 ```
 
+## Draw Card from Deck View Sequence Diagram
+
+```mermaid
+sequenceDiagram
+%% DeckPanelView ->>+ 
+```
+
 <https://mermaid.live/>
+<https://www.fluidui.com/editor/live/>
