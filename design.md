@@ -1,6 +1,8 @@
 # Design
 
-## High-Level Class Diagram
+## Class Diagrams
+
+### MVC
 
 ```mermaid
 classDiagram
@@ -15,7 +17,9 @@ classDiagram
     }
 ```
 
-## Model Class Diagram
+### Model {#ModelClassDiagram}
+
+[Draw Card](#DrawCard)
 
 ```mermaid
 classDiagram
@@ -41,6 +45,10 @@ classDiagram
         +get_investigator_cards() List investigator_cards_tuple_of_frontpath_backpath
         +get_investigators_stats() Dict investigators_tuple_of_healthnum_sanitynum
         +get_investogators_decks() Dict list_of_investigators_decks_tuple_of_frontpath_backpath
+        +draw_card(deck_name)
+        +discard_drawn_card(deck_name)
+        +play_card(deck_name, area_name)
+        +get_area_state(area_name)
     }
     
     Card <|-- PlayerCard
@@ -68,18 +76,13 @@ classDiagram
     class Deck{
         -Deque~Card~ cards
         -Deque~Card~ discard_pile
+        -Card drawn_card
+        -List~string~ playable_areas
         -__init__(Dict~string, int~ json_deck)
         +shuffle()
         +draw_card(): Card
-        -discard()
-    }
-    
-    PlayerDeck o-- PlayerCard
-    class PlayerDeck{
-    }
-    
-    EncounterDeck o-- EncounterCard
-    class EncounterDeck{
+        +discard()
+        +play_card(area_name)
     }
     
     class ChaosToken{
@@ -87,19 +90,22 @@ classDiagram
         +int value
     }
 
-    Investigator -- InvestigatorCard
     Investigator -- PlayerDeck
     class Investigator{
         +string name
-        +InvestigatorCard card
+        +Card investigator_card
         +bool is_lead_investigator
         +PlayerDeck player_deck
         +int num_resources
+        +List~Card~ assets
         +List~Card~ player_hand
     }
 ```
 
-## View Class Diagram
+### View {#ViewClassDiagram}
+
+[Draw Card](#DrawCard)
+
 
 ```mermaid
 classDiagram
@@ -188,7 +194,7 @@ classDiagram
         -DeckView agenda_deck
         -DeckView act_deck
         -CounterView doom_counter
-        -DeckPanelView encounter_deck
+        -encounter_deck = DeckPanelView(controller, name="encounter", playable_areas=["threat", "location"])
         +__init__(controller, ...)
     }
     
@@ -216,24 +222,27 @@ classDiagram
         -CounterView resource_counter
         -CounterView health_counter
         -CounterView sanity_counter
-        -DeckPanelView player_deck
+        -player_deck = DeckPanelView(controller, name="player", playable_areas=["assets"])
     }
     
     CardView <|-- DeckView
     CardView <|-- LocationCardView
+    CardView -- ImageLabel
     class CardView{
         -string view_title
         -string name
         -bool is_portrait_orientation=True
         -bool is_facedown=True
         -bool can_flip=False
-        +__init__(controller, name, front_image=None, back_image=None)
+        +__init__(controller, name, image)
         +flip()
+        -load_zoom_view(image)
     }
     
     LocationCardView -- CounterView
+    LocationCardView -- InvestigatorSlot
     class LocationCardView{
-        -List investigator_slots
+        -List~InvestigatorSlot~ investigator_slots
         -CounterView clue_counter
     }
     
@@ -242,10 +251,12 @@ classDiagram
         -ArkhamHorrorController controller
         -bool can_shuffle=True
         -bool can_select=True
-        +__init__(controller)
-        +draw()
+        +__init__(controller, string name, List~string~ playable_areas)
+        +draw_card()
         +shuffle()
         +select()
+        +discard()
+        +play_card(area_name)
     }
 
     DeckPanelView -- DeckView
@@ -253,6 +264,7 @@ classDiagram
         -string title
         -DeckView deck
         -DeckView discard_pile
+        +__init__(controller, name, playable_areas)
     }
     
     CardArrayView *-- CardView
@@ -263,12 +275,15 @@ classDiagram
     class CounterView{
         -string title
         -int start_value
+        +__init__(controller, name)
         +increment()
         +decrement()
     }
 ```
 
-## Controller Class Diagram
+### Controller {#ControllerClassDiagram}
+
+[Draw Card](#DrawCard)
 
 ```mermaid
 classDiagram
@@ -276,13 +291,16 @@ classDiagram
     class ArkhamHorrorController{
         -ArkhamHorrorModel model
         -ArkhamHorrorView view
-        -Dict~string, Model.Deck~ decks
         -Setup setup
         +run()
-        +play_new_game(string campaign_name, string part_name, List~string~ investigators, string difficulty)
+        +handle_new_game(string campaign_name, string part_name, List~string~ investigators, string difficulty)
         -get_setup() Setup
-        +shuffle_deck(string deck_name)
-        +draw_from_deck(string deck_name) Tuple image_frontpath_backpath
+        +handle_flip(string name) string image_path
+        +handle_shuffle_deck(string name)
+        +handle_draw_card(string name) string image_path
+        +handle_play_card(sring name)
+        +handle_select_card(string name) string image_path
+        +handle_update_counter(string name, int delta) string counter_num
     }
 
     class Setup{
@@ -298,7 +316,9 @@ classDiagram
 
 ```
 
-## Run Sequence Diagram
+## Sequence Diagrams
+
+### Run Game
 
 ```mermaid
 sequenceDiagram
@@ -319,7 +339,7 @@ sequenceDiagram
     Controller -->- ArkhamHorror: -
 ```
 
-## New Game Sequence Diagram
+### New Game
 
 ```mermaid
 sequenceDiagram
@@ -349,11 +369,50 @@ View ->> View: load_new_game_selection()
         View ->>+ View: load_tabletop()
 ```
 
-## Draw Card from Deck View Sequence Diagram
+### Draw Card from Deck {#DrawCard}
+
+[View](#ViewClassDiagram)
+[Controller](#ControllerClassDiagram)
+[Model](#ModelClassDiagram)
+
 
 ```mermaid
 sequenceDiagram
-%% DeckPanelView ->>+ 
+DeckView ->>+ DeckView: draw_card()
+    DeckView ->>+ Controller: handle_draw_card(deck_name)
+        Controller ->>+ Model: draw_card(deck_name)
+            Model ->> Model: <deck_name>.draw_card()
+        Model -->>- Controller: image_path
+    Controller -->>- DeckView: image_path
+    DeckView -->>+ DeckView: load_zoom_view(image_path)
+```
+
+#### Discard
+
+```mermaid
+sequenceDiagram
+DeckView ->> DeckView: load_zoom_view(image_path)
+    DeckView ->> DeckView: discard()
+        DeckView ->> Controller: handle_discard(deck_name)
+            Controller ->> Model: discard_drawn_card(deck_name)
+                Model ->> Model: <deck_name>.discard()
+```
+
+#### Play
+
+```mermaid
+sequenceDiagram
+%% Just to control order of lifelines
+View --> DeckView: -
+
+DeckView ->> DeckView: load_zoom_view(image_path)
+    DeckView ->> DeckView: play_card(area_name)
+        DeckView ->> Controller: handle_play_card(deck_name, area_name)
+            Controller ->> Model: play_card(deck_name, area_name)
+                Model -->> Model: <deck_name>.play_card(area_name)
+        Controller ->>+ Model: get_area_state(area_name)
+        Model -->>- Controller: area_data
+        Controller ->> View: update(area_name, area_data)
 ```
 
 <https://mermaid.live/>
