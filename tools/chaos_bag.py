@@ -4,45 +4,32 @@ from tkinter import ttk
 
 
 class ChaosBag(tk.Tk):
-    __datafile: string = ""
-
-    def __init__(self, difficulty):
+    def __init__(self, tokens):
+        self.__tokens: list[str] = tokens
         super().__init__()
         super().title("Chaos Bag")
         super().geometry("500x500")
-        self.__assemble(difficulty)
-
-    def __assemble(self, difficulty):
-        pass
-
-    def __load_chaos_token_data(self):
-        with open(ChaosBag.__datafile, "r") as read_file:
-            pass
 
 
-class Difficulty:
-    __EASY = 0
-    __STANDARD = 1
-    __HARD = 2
-    __EXPERT = 3
-
-    @property
-    def EASY(self):
-        return self.__EASY
-
-    @property
-    def STANDARD(self):
-        return self.__STANDARD
-
-    @property
-    def HARD(self):
-        return self.__HARD
-
-    @property
-    def EXPERT(self):
-        return self.__EXPERT
+def get_difficulty_input():
+    pass
 
 
 if __name__ == "__main__":
-    chaos_bag = ChaosBag(Difficulty.EASY)
+    VALID_DIFFICULTIES = "eshx"
+    difficulty: str = input(
+        "Enter difficulty level ([E]asy / [s]tandard / [h]ard / e[x]pert: "
+    ).lower()
+    while difficulty not in VALID_DIFFICULTIES:
+        print(f"{difficulty} not a valid entry.")
+        difficulty: str = input(
+            "Enter difficulty level ([E]asy / [s]tandard / [h]ard / e[x]pert: "
+        )
+
+    chaos_tokens = dict()
+    with open("../data/chaos-tokens.json", "r") as read_file:
+        chaos_data = json.load(read_file)
+        chaos_tokens = chaos_data["difficulties"][difficulty]
+
+    chaos_bag = ChaosBag(chaos_tokens)
     chaos_bag.mainloop()
