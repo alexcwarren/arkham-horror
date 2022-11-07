@@ -111,6 +111,9 @@ class ChaosBag(tk.Tk):
         self.__x_value.set(updated_value)
 
     def print_odds(self):
+        if self.__total_count <= 0:
+            return
+
         print("EXPECTED")
         for token in self.__unique_tokens:
             perc = self.__token_percentages[token]
@@ -165,7 +168,8 @@ def get_difficulty(valid_difficulties: dict):
 
 if __name__ == "__main__":
     title: str = "Arkham Horror - Night of the Zealot"
-    print("\n", "=" * len(title))
+    print()
+    print("=" * len(title))
     print(title)
     print("=" * len(title), "\n")
 
