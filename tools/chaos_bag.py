@@ -6,8 +6,6 @@ from tkinter import ttk
 
 
 class ChaosBag(tk.Tk):
-    __X: str = "X"
-
     def __init__(
         self, token_quantities: dict[str, int], special_values: dict[str, str]
     ):
