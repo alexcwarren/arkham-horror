@@ -102,6 +102,7 @@ class ChaosBag(tk.Tk):
     def __update_result_window(self):
         token = self.__draw_token()
         value = self.__token_values[token].replace("X", self.__x_value.get())
+        value = "0" if value.startswith("-") and int(value) == 0 else value
         self.__result_value.set(f'"{token}" = {value}')
 
     def __update_x_value(self, value):
