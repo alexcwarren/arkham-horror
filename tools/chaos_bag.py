@@ -144,13 +144,13 @@ def get_input(prompt: str, default: str):
 
 
 def get_campaign(valid_campaigns: dict):
-    campaign_input = get_input("Enter campaign ([N]ight of the zealot): ", "n")
+    campaign_input = get_input("Enter campaign ([N]ight of the zealot)\n>>> ", "n")
     return valid_campaigns[campaign_input]
 
 
 def get_part(valid_parts: dict):
     parts_input = get_input(
-        "Enter part (the [G]athering / the [m]idnight masks / the [d]evourer below): ",
+        "Enter part (the [G]athering / the [m]idnight masks / the [d]evourer below)\n>>> ",
         "g",
     )
     return valid_parts[parts_input]
@@ -158,7 +158,7 @@ def get_part(valid_parts: dict):
 
 def get_difficulty(valid_difficulties: dict):
     difficulty_input = get_input(
-        "Enter difficulty level ([E]asy / [s]tandard / [h]ard / e[x]pert): ", "e"
+        "Enter difficulty level ([E]asy / [s]tandard / [h]ard / e[x]pert)\n>>> ", "e"
     )
     return valid_difficulties[difficulty_input]
 
