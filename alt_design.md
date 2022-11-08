@@ -27,12 +27,35 @@
     a. Draw opening `hand` for each `investigator`
 
     ```python
+    class DataManager:
+        DATA_PATH: str
+        
+        def __init__(self):
+            self.__token_data: dict = self.__get_json_data(...)
+            self.__deck_data: dict = self.__get_json_data(...)
+            self.__card_data: dict = self.__get_json_data(...)
+            ...
+
+        @property
+        def token_data(self) -> dict:
+            return self.__token_data
+
+        @property
+        def deck_data(self) -> dict:
+            return self.__deck_data
+
+        @property
+        def card_data(self) -> dict:
+            return self.__card_data
+
+        def __get_json_data(self, filename: str) -> dict:
+            with open(f"{self.DATA_PATH}{filename}", "r") as read_file:
+                return json.load(read_file)
+    ```
+
+    ```python
     class ArkhamHorror:
         INVESTIGATOR_NAMES: list[str]
-        DATA_PATH: str
-        TOKEN_FILE: str
-        DECK_FILE: str
-        FILES: list[str] = [...]
 
         def __init__(self):
             self.campaign: str = ""
@@ -40,8 +63,11 @@
             self.difficulty: str = ""
             self.chaos_bag: ChaosBag = None
             ...
-            self.data: dict = dict()
-            self.load_json_data()
+            self.__data: DataManager = DataManager()
+
+        @property
+        def data(self) -> dict:
+            return self.__data
 
         def start(self):
             self.prompt_campaign()
@@ -57,11 +83,10 @@
             # Between 1 and 4 (inclusive)
             num_investigators: int = ...
             ...
-            deck_data: dict = self.data[self.DECK_FILE]
             for name in chosen_investigators:
                 ...
                 self.investigators[name] = Investigator(
-                    name, deck_data[name]
+                    name, self.data
                 )
 
         def prompt_difficulty(self):
@@ -90,25 +115,45 @@
             self.investigators[lead_investigator].make_lead_investigator()
 
         def assemble_chaos_bag(self):
-            token_data: dict = self.data[self.TOKEN_FILE]
-            self.chaos_bag = ChaosBag(token_data)
-
-        def load_json_data(self, filename: str) -> dict:
-            for filename in self.FILES:
-                with open(f"{self.DATA_PATH}{filename}", "r") as read_file:
-                    self.data[filename] = json.load(read_file)
+            self.chaos_bag = ChaosBag(self.data.token_data)
     ```
 
     ```python
     class Investigator:
-        def __init__(self, name: str, player_deck_data: dict):
+        def __init__(self, name: str, data: dict):
             self.name: str = name
-            self.player_deck: Deck = Deck(player_deck_data)
+            self.player_deck: Deck = Deck(data)
             self.is_lead_investigator: bool = False
+            self.__resource_pool: int = 0
             self.hand: list[Card] = list()
 
+        @property
+        def resource_pool(self) -> int:
+            return self.__resource_pool
+
+        def gain_resources(self, num_resources: int):
+            self.__resource_pool += num_resources
+        
+        def lose_resources(self, num_resources: int):
+            self.__resource_pool = max(0, self.__resource_pool - num_resources)
+
         def draw_opening_hand(self):
-            self.player_deck.draw_cards(5)
+            self.hand = self.player_deck.draw_cards(5)
+
+            weakness_cards: list[Card] = list()
+            for i,card in enumerate(self.hand.copy()):
+                if card.type == Card.WEAKNESS:
+                    weakness_cards.append(card)
+                    new_card: Card = None
+                    while new_card is None or new_card.type == Card.WEAKNESS:
+                        new_card = self.player_deck.draw_card()
+                        if new_card.type == Card.WEAKNESS:
+                            weakness_cards.append(card)
+                    self.hand[i] = new_card
+            if weakness_cards:
+                self.player_deck.shuffle_cards_back(weakness_cards)
+
+            # Prompt for mulligan
 
         def make_lead_investigator(self):
             self.is_lead_investigator = True
@@ -116,25 +161,49 @@
 
     ```python
     class Deck:
-        def __init__(self, deck_data: dict):
+        def __init__(self, data: dict):
             self.cards: deque[Card] = deque()
             self.assemble_cards()
+            self.shuffle()
 
-        def assemble(self, deck_data):
-            ...
+        def assemble_cards(self, data):
+            for card_name, quantity in self.data.deck_data.items():
+                card: Card = Card(card_name, card_data)
+                for _ in range(quantity):
+                    self.cards.append(card)
 
-        def draw_cards(self, num_cards):
+        def shuffle(self):
+            random.shuffle(self.cards)
+
+        def shuffle_card_back(self, card: Card):
+            self.shuffle_cards_back([card])
+
+        def shuffle_cards_back(self, cards: list[Card]):
+            self.cards.extend(cards)
+            self.shuffle()
+
+        def draw_cards(self, num_cards) -> list[Card]:
             cards = list()
             for _ in range(num_cards):
                 cards.append(self.draw_card())
+            return cards
 
-        def draw_card(self):
+        def draw_card(self) -> Card:
             return self.cards.pop()
     ```
 
     ```python
     class Card:
-        ...
+        WEAKNESS: str
+
+        def __init__(self, name: str, data: dict):
+            self.__name: str = name
+            ...
+            self.__type: str
+
+        @property
+        def type(self) -> str:
+            return self.__type
     ```
 
     ```python
@@ -155,7 +224,7 @@
             return random.choices(self.tokens, self.token_probabilities)[0]
     ```
 
-    a. 
+    a. ...
 
 1. Play
 ...
