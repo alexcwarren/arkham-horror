@@ -28,24 +28,52 @@
 
     ```python
     class ArkhamHorror:
+        INVESTIGATOR_NAMES: list[str]
         DATA_PATH: str
         TOKEN_FILE: str
+        DECK_FILE: str
+        FILES: list[str] = [...]
 
         def __init__(self):
-            self.campaign: str
-            self.investigators: list[Investigator]
-            self.chaos_bag: ChaosBag
+            self.campaign: str = ""
+            self.investigators: dict[str, Investigator] = dict()
+            self.difficulty: str = ""
+            self.chaos_bag: ChaosBag = None
             ...
+            self.data: dict = dict()
+            self.load_json_data()
 
         def start(self):
             self.prompt_campaign()
             self.prompt_investigators()
+            self.prompt_difficulty()
 
         def prompt_campaign(self):
             ...
+            self.campaign = ...
 
         def prompt_investigators(self):
             ...
+            # Between 1 and 4 (inclusive)
+            num_investigators: int = ...
+            ...
+            deck_data: dict = self.data[self.DECK_FILE]
+            for name in chosen_investigators:
+                ...
+                self.investigators[name] = Investigator(
+                    name, deck_data[name]
+                )
+
+        def prompt_difficulty(self):
+            ...
+            difficulties: dict[str, str] = {
+                "e": "Easy",
+                "s": "Standard,
+                "h": "Hard",
+                "x": "Expert"
+            }
+            ...
+            self.difficulty = difficulties[choice]
 
         def setup(self):
             ...
@@ -58,35 +86,42 @@
             ...
 
         def prompt_lead_investigator(self):
-            ...
-        
+            lead_investigator: str = ...
+            self.investigators[lead_investigator].make_lead_investigator()
+
         def assemble_chaos_bag(self):
-            token_data: dict = self.get_chaos_token_data()
+            token_data: dict = self.data[self.TOKEN_FILE]
             self.chaos_bag = ChaosBag(token_data)
 
-        def get_chaos_token_data(self) -> dict:
-            return self.get_json_data(self.TOKEN_FILE)
-
-        def get_json_data(self, filename: str) -> dict:
-            with open(f"{self.DATA_PATH}{self.TOKEN_PATH}", "r") as read_file:
-                return json.load(read_file)
-
+        def load_json_data(self, filename: str) -> dict:
+            for filename in self.FILES:
+                with open(f"{self.DATA_PATH}{filename}", "r") as read_file:
+                    self.data[filename] = json.load(read_file)
     ```
 
     ```python
     class Investigator:
-        def __init__(self):
-            self.player_deck: Deck
-            self.hand: list[Card]
+        def __init__(self, name: str, player_deck_data: dict):
+            self.name: str = name
+            self.player_deck: Deck = Deck(player_deck_data)
+            self.is_lead_investigator: bool = False
+            self.hand: list[Card] = list()
 
         def draw_opening_hand(self):
             self.player_deck.draw_cards(5)
+
+        def make_lead_investigator(self):
+            self.is_lead_investigator = True
     ```
 
     ```python
     class Deck:
-        def __init__(self):
-            self.cards: list[Card]
+        def __init__(self, deck_data: dict):
+            self.cards: deque[Card] = deque()
+            self.assemble_cards()
+
+        def assemble(self, deck_data):
+            ...
 
         def draw_cards(self, num_cards):
             cards = list()
