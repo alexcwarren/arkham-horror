@@ -27,98 +27,56 @@
     a. Draw opening `hand` for each `investigator`
 
     ```python
-    class DataManager:
-        DATA_PATH: str
-        
-        def __init__(self):
-            self.__token_data: dict = self.__get_json_data(...)
-            self.__deck_data: dict = self.__get_json_data(...)
-            self.__card_data: dict = self.__get_json_data(...)
-            ...
-
-        @property
-        def token_data(self) -> dict:
-            return self.__token_data
-
-        @property
-        def deck_data(self) -> dict:
-            return self.__deck_data
-
-        @property
-        def card_data(self) -> dict:
-            return self.__card_data
-
-        def __get_json_data(self, filename: str) -> dict:
-            with open(f"{self.DATA_PATH}{filename}", "r") as read_file:
-                return json.load(read_file)
-    ```
-
-    ```python
     class ArkhamHorror:
         INVESTIGATOR_NAMES: list[str]
 
         def __init__(self):
-            self.campaign: str = ""
-            self.investigators: dict[str, Investigator] = dict()
-            self.difficulty: str = ""
-            self.chaos_bag: ChaosBag = None
+            self.__model: ArkhamHorrorModel = None
+            self.__view: ArkhamHorrorView = ArkhamHorrorView()
             ...
-            self.__data: DataManager = DataManager()
-
-        @property
-        def data(self) -> dict:
-            return self.__data
 
         def start(self):
-            self.prompt_campaign()
-            self.prompt_investigators()
-            self.prompt_difficulty()
+            campaign: str = self.__view.prompt_campaign()
+            investigators: list[str] = self.__view.prompt_investigators()
+            difficulty: str = self.__view.prompt_difficulty()
+            self.__model = ArkhamHorrorModel(campaign, investigators, difficulty)
 
-        def prompt_campaign(self):
+        def __setup(self):
             ...
-            self.campaign = ...
-
-        def prompt_investigators(self):
-            ...
-            # Between 1 and 4 (inclusive)
-            num_investigators: int = ...
-            ...
-            for name in chosen_investigators:
-                ...
-                self.investigators[name] = Investigator(name, self.__data)
-
-        def prompt_difficulty(self):
-            ...
-            difficulties: dict[str, str] = {
-                "e": "Easy",
-                "s": "Standard,
-                "h": "Hard",
-                "x": "Expert"
-            }
-            ...
-            self.difficulty = difficulties[choice]
-
-        def setup(self):
-            ...
-            self.prompt_lead_investigator()
-            self.assemble_chaos_bag()
-            ...
-            for investigator in self.investigators:
+            lead_investigator: str = self.view.prompt_lead_investigator()
+            for name,investigator in self.model.investigators.items():
+                investigator.lead_investigator = name == lead_investigator
                 investigator.gain_resources(5)
                 investigator.draw_opening_hand()
+                if self.view.prompt_mulligan():
+                    investigator.mulligan()
             ...
+    ```
 
-        def prompt_lead_investigator(self):
-            lead_investigator: str = ...
-            self.investigators[lead_investigator].make_lead_investigator()
+    ```python
+    class ArkhamHorrorModel:
+        def __init__(
+            self, controller: ArkhamHorror, campaign: str, difficulty: str, investigators: list[str]
+         ):
+            self.controller: ArkhamHorror = controller
+            self.campaign: str = campaign
+            self.difficulty: str = difficulty
+            self.investigators: dict[str, Investigator] = dict()
+            self.__create_investigators(investigators)
+            self.chaos_bag: ChaosBag = None
+            self.__assemble_chaos_bag()
 
-        def assemble_chaos_bag(self):
-            self.chaos_bag = ChaosBag(self.data.token_data)
+        def __create_investigators(self, investigators: list[str]):
+            for name in investigators:
+                self.investigators[name] = Investigator(name)
+
+        def __assemble_chaos_bag(self):
+            self.chaos_bag = ChaosBag(token_data)
     ```
 
     ```python
     class Investigator:
-        def __init__(self, name: str, data: DataManager):
+        def __init__(self, name: str):
             self.__name: str = name
             self.player_deck: Deck = Deck(name, data)
             self.is_lead_investigator: bool = False
@@ -151,7 +109,7 @@
             if weakness_cards:
                 self.player_deck.shuffle_cards_back(weakness_cards)
 
-            # Prompt for mulligan
+            # Prompt for mulligan?
 
         def make_lead_investigator(self):
             self.is_lead_investigator = True
@@ -221,6 +179,36 @@
 
         def draw_token(self):
             return random.choices(self.tokens, self.token_probabilities)[0]
+    ```
+
+    ```python
+    class ArkhamHorrorView:
+        def __init__(self):
+            ...
+
+        def prompt_campaign(self):
+            self.view.prompt_campaign()
+            self.campaign = ...
+
+        def prompt_investigators(self):
+            ...
+            # Between 1 and 4 (inclusive)
+            num_investigators: int = ...
+            ...
+            for name in chosen_investigators:
+                ...
+                self.investigators[name] = Investigator(name, self.__data)
+
+        def prompt_difficulty(self):
+            ...
+            difficulties: dict[str, str] = {
+                "e": "Easy",
+                "s": "Standard,
+                "h": "Hard",
+                "x": "Expert"
+            }
+            ...
+            self.difficulty = difficulties[choice]
     ```
 
     a. ...
