@@ -85,9 +85,7 @@
             ...
             for name in chosen_investigators:
                 ...
-                self.investigators[name] = Investigator(
-                    name, self.data
-                )
+                self.investigators[name] = Investigator(name, self.__data)
 
         def prompt_difficulty(self):
             ...
@@ -120,9 +118,9 @@
 
     ```python
     class Investigator:
-        def __init__(self, name: str, data: dict):
-            self.name: str = name
-            self.player_deck: Deck = Deck(data)
+        def __init__(self, name: str, data: DataManager):
+            self.__name: str = name
+            self.player_deck: Deck = Deck(name, data)
             self.is_lead_investigator: bool = False
             self.__resource_pool: int = 0
             self.hand: list[Card] = list()
@@ -161,14 +159,15 @@
 
     ```python
     class Deck:
-        def __init__(self, data: dict):
-            self.cards: deque[Card] = deque()
-            self.assemble_cards()
+        def __init__(self, name: str, data: DataManager):
+            self.__name: str = name
+            self.__cards: deque[Card] = deque()
+            self.__assemble_cards(data)
             self.shuffle()
 
-        def assemble_cards(self, data):
-            for card_name, quantity in self.data.deck_data.items():
-                card: Card = Card(card_name, card_data)
+        def __assemble_cards(self, data: DataManager):
+            for card_name, quantity in data.deck_data[self.name].items():
+                card: Card = Card(card_name, self.data.card_data[card_name])
                 for _ in range(quantity):
                     self.cards.append(card)
 
@@ -196,7 +195,7 @@
     class Card:
         WEAKNESS: str
 
-        def __init__(self, name: str, data: dict):
+        def __init__(self, name: str, card_data: dict):
             self.__name: str = name
             ...
             self.__type: str
