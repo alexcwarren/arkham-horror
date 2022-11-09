@@ -28,35 +28,63 @@
 
     ```python
     class ArkhamHorror:
-        INVESTIGATOR_NAMES: list[str]
+        __DATA_PATH: str = ...
+        __TOKEN_FILE: str = ...
+        __DECK_FILE: str = ...
+        __CARD_FILE: str = ...
 
         def __init__(self):
             self.__model: ArkhamHorrorModel = None
             self.__view: ArkhamHorrorView = ArkhamHorrorView()
+            self.__load_json_data()
             ...
+
+        def __get_json_data(self, filename: str) -> dict:
+            with open(f"{self.__DATA_PATH}{filename}", "r") as read_file:
+                return json.load(read_file)
+
+        def __load_json_data(self):
+            self.token_data: dict = self.__get_json_data(TOKEN_FILE)
+            self.deck_data: dict = self.__get_json_data(DECK_FILE)
+            self.card_data: dict = self.__get_json_data(CARD_FILE)
 
         def start(self):
             campaign: str = self.__view.prompt_campaign()
             investigators: list[str] = self.__view.prompt_investigators()
             difficulty: str = self.__view.prompt_difficulty()
-            self.__model = ArkhamHorrorModel(campaign, investigators, difficulty)
+            self.__model = ArkhamHorrorModel(
+                self, campaign, difficulty, investigators
+            )
 
         def __setup(self):
-            ...
-            lead_investigator: str = self.view.prompt_lead_investigator()
-            for name,investigator in self.model.investigators.items():
+            self.__model.assemble_chaos_bag()
+            self.__set_up_investigators()
+            self.__model.assemble_agenda_deck()
+            self.__model.assemble_act_deck()
+            self.__model.play_locations()
+            self.__model.place_investigators()
+            self.__model.assemble_aside_cards()
+            self.__model.assemble_encounter_deck()
+            self.__view.notify_begin_game()
+
+        def __set_up_investigators(self):
+            lead_investigator: str = self.__view.prompt_lead_investigator()
+            for name,investigator in self.__model.investigators.items():
                 investigator.lead_investigator = name == lead_investigator
                 investigator.gain_resources(5)
                 investigator.draw_opening_hand()
-                if self.view.prompt_mulligan():
+                if self.__view.prompt_mulligan():
                     investigator.mulligan()
-            ...
     ```
 
     ```python
     class ArkhamHorrorModel:
         def __init__(
-            self, controller: ArkhamHorror, campaign: str, difficulty: str, investigators: list[str]
+            self,
+            controller: ArkhamHorror,
+            campaign: str,
+            difficulty: str,
+            investigators: list[str]
          ):
             self.controller: ArkhamHorror = controller
             self.campaign: str = campaign
@@ -64,21 +92,39 @@
             self.investigators: dict[str, Investigator] = dict()
             self.__create_investigators(investigators)
             self.chaos_bag: ChaosBag = None
-            self.__assemble_chaos_bag()
 
         def __create_investigators(self, investigators: list[str]):
             for name in investigators:
-                self.investigators[name] = Investigator(name)
+                self.investigators[name] = Investigator(self.controller, name)
 
-        def __assemble_chaos_bag(self):
-            self.chaos_bag = ChaosBag(token_data)
+        def assemble_chaos_bag(self):
+            self.chaos_bag = ChaosBag(self.controller, self.difficulty)
+
+        def assemble_agenda_deck(self):
+            ...
+
+        def assemble_act_deck(self):
+            ...
+
+        def play_locations(self):
+            ...
+
+        def place_investigators(self):
+            ...
+
+        def assemble_aside_cards(self):
+            ...
+
+        def assemble_encounter_deck(self):
+            ...
     ```
 
     ```python
     class Investigator:
-        def __init__(self, name: str):
+        def __init__(self, controller: ArkhamHorror, name: str):
+            self.controller: ArkhamHorror = controller
             self.__name: str = name
-            self.player_deck: Deck = Deck(name, data)
+            self.player_deck: Deck = Deck(self.controller, name)
             self.is_lead_investigator: bool = False
             self.__resource_pool: int = 0
             self.hand: list[Card] = list()
@@ -109,7 +155,13 @@
             if weakness_cards:
                 self.player_deck.shuffle_cards_back(weakness_cards)
 
-            # Prompt for mulligan?
+        def mulligan(self, cards: list[Card]):
+            for set_aside in cards:
+                for i,card in enumerate(self.hand):
+                    if card == set_aside:
+                        self.hand[i] = self.player_deck.draw_card()
+                        break
+            self.player_deck.shuffle_cards_back(cards)
 
         def make_lead_investigator(self):
             self.is_lead_investigator = True
@@ -117,15 +169,16 @@
 
     ```python
     class Deck:
-        def __init__(self, name: str, data: DataManager):
+        def __init__(self, controller: ArkhamHorror, name: str):
+            self.controller: ArkhamHorror = controller
             self.__name: str = name
             self.__cards: deque[Card] = deque()
-            self.__assemble_cards(data)
+            self.__assemble_cards()
             self.shuffle()
 
-        def __assemble_cards(self, data: DataManager):
-            for card_name, quantity in data.deck_data[self.name].items():
-                card: Card = Card(card_name, self.data.card_data[card_name])
+        def __assemble_cards(self):
+            for name, quantity in self.controller.deck_data[self.name].items():
+                card: Card = Card(self.controller, name)
                 for _ in range(quantity):
                     self.cards.append(card)
 
@@ -153,10 +206,20 @@
     class Card:
         WEAKNESS: str
 
-        def __init__(self, name: str, card_data: dict):
+        def __init__(self, controller: ArkhamHorror, name: str):
+            self.controller: ArkhamHorror = controller
             self.__name: str = name
-            ...
-            self.__type: str
+            self.__class: str = self.controller.card_data[name]["class"]
+            self.__cost: str = self.controller.card_data[name]["cost"]
+            self.__level: str = self.controller.card_data[name]["level"]
+            self.__type: str = self.controller.card_data[name]["type"]
+            self.__icons: str = self.controller.card_data[name]["icons"]
+            self.__traits: str = self.controller.card_data[name]["traits"]
+            self.__set: str = self.controller.card_data[name]["set"]
+            self.__number: str = self.controller.card_data[name]["number"]
+            self.__encounter: str = self.controller.card_data[name]["encounter"]
+            self.__image_name_front: str = self.controller.card_data[name]["image_front"]
+            self.__image_name_back: str = self.controller.card_data[name]["image_back"]
 
         @property
         def type(self) -> str:
@@ -165,20 +228,21 @@
 
     ```python
     class ChaosBag:
-        def __init__(self, token_quantities: dict[str, int]):
-            self.tokens: list[str] = sorted(list(set(token_quantities)))
+        def __init__(self, controller: ArkhamHorror, difficulty: str):
+            token_quantities: dict[str, int] = self.controller.token_data["difficulties"][difficulty]
+            self.__tokens: list[str] = sorted(list(set(token_quantities)))
 
-            self.token_probabilities: list[float] = list()
-            self.calculate_token_probabilities(token_quantities)
+            self.__token_probabilities: list[float] = list()
+            self.__calculate_token_probabilities(token_quantities)
 
-        def calculate_token_probabilities(self, token_quantities: dict[str, int]):
-            total_tokens: int = sum(count for count in quantities)
-            self.token_probabilities.extend(
+        def __calculate_token_probabilities(self, token_quantities: dict[str, int]):
+            total_tokens: int = sum(count for count in token_quantities)
+            self.__token_probabilities.extend(
                 token_quantities[token] / total_tokens for token in self.tokens
             )
 
         def draw_token(self):
-            return random.choices(self.tokens, self.token_probabilities)[0]
+            return random.choices(self.__tokens, self.__token_probabilities)[0]
     ```
 
     ```python
@@ -209,6 +273,12 @@
             }
             ...
             self.difficulty = difficulties[choice]
+
+        def prompt_mulligan(self):
+            ...
+
+        def notify_begin_game(self):
+            ...
     ```
 
     a. ...
