@@ -30,16 +30,16 @@
     "Manual Dexterity": 2,
     "Paranoia": 1
   },
-  "The Gathering - Agenda": {
-    "What's Going On?!": 1,
-    "Rise of the Ghouls": 1,
-    "They're Getting Out!": 1
-  },
-  "The Gathering - Act": {
-    "Trapped": 1,
-    "The Barrier": 1,
-    "What Have You Done?": 1
-  },
+  "The Gathering - Agenda": [
+    "What's Going On?!",
+    "Rise of the Ghouls",
+    "They're Getting Out!"
+  ],
+  "The Gathering - Act": [
+    "Trapped",
+    "The Barrier",
+    "What Have You Done?"
+  ],
   "The Gathering - Locations": {
     "Study": 1,
     "Hallway": 1,
