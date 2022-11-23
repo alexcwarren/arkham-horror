@@ -145,7 +145,7 @@
         def __init__(self, model: ArkhamHorrorModel, name: str):
             self.model: ArkhamHorrorModel = model
             self.__name: str = name
-            self.__player_deck: Deck = Deck(self.model, name)
+            self.__player_deck: Deck = FullDeck(self.model, name)
             self.is_lead_investigator: bool = False
             self.__resource_pool: int = 0
             self.__hand: list[Card] = list()
@@ -161,18 +161,14 @@
             self.__resource_pool = max(0, self.__resource_pool - num_resources)
 
         def draw_opening_hand(self):
-            self.hand = self.__player_deck.draw_cards(5)
+            self.__hand = self.__player_deck.draw_cards(5)
 
             weakness_cards: list[Card] = list()
             for i,card in enumerate(self.hand.copy()):
-                if card.type == Card.TYPE.WEAKNESS:
+                while card.type == Card.TYPE.WEAKNESS:
                     weakness_cards.append(card)
-                    new_card: Card = None
-                    while new_card is None or new_card.type == Card.TYPE.WEAKNESS:
-                        new_card = self.player_deck.draw_card()
-                        if new_card.type == Card.TYPE.WEAKNESS:
-                            weakness_cards.append(card)
-                    self.hand[i] = new_card
+                    card = self.player_deck.draw_card()
+                self.hand[i] = card
             if weakness_cards:
                 self.player_deck.shuffle_cards_back(weakness_cards)
 
