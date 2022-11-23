@@ -46,7 +46,6 @@
             self.__model.assemble_agenda_deck()
             self.__model.assemble_act_deck()
             self.__model.play_locations()
-            self.__model.place_investigators()
             self.__model.assemble_aside_cards()
             self.__model.assemble_encounter_deck()
             self.__view.notify_begin_game()
@@ -57,8 +56,9 @@
                 investigator.is_lead_investigator = name == lead_investigator
                 investigator.gain_resources(5)
                 investigator.draw_opening_hand()
-                if self.__view.prompt_mulligan():
-                    investigator.mulligan()
+                returned_cards: list[str] = self.__view.prompt_mulligan()
+                if returned_cards:
+                    investigator.mulligan(returned_cards)
     ```
 
     ```python
@@ -85,6 +85,7 @@
             self.__part_name: str = self.__campaign_data[campaign][0]
             self.__create_investigators(investigators)
             self.__chaos_bag: ChaosBag = None
+            self.__doom_counter: int = 0
 
         def get_token_data(self, difficulty: str) -> dict:
             return self.__token_data.get(difficulty)
@@ -124,20 +125,36 @@
 
         def play_locations(self):
             self.__locations: dict[str, Location] = dict()
-            for location in self.__deck_data.get(
+            location_data: dict = self.__deck_data.get(
                 f"{self.__part_name} - Locations"
-            ):
-                self.__locations[location] = Location(self, location)
-            ...
-
-        def place_investigators(self):
-            ...
+            )
+            for name, data in location_data.items():
+                self.__locations[name] = Location(
+                    self,
+                    name,
+                    data["is_played_at_start"],
+                    data["shroud"],
+                    data["clue_count"]
+                )
 
         def assemble_aside_cards(self):
-            ...
+            self.__aside_cards: dict[Card] = {
+                name: Card(self, name)
+                for name in self.__deck_data.get(
+                    f"{self.__part_name} - Aside"
+                )
+            }
 
         def assemble_encounter_deck(self):
-            ...
+            self.__encounter_deck: Deck = FullDeck(
+                self, f"{self.__part_name} - Encounter"
+            )
+
+        def add_doom(self):
+            self.__doom_counter += 1
+
+        def reset_doom(self):
+            self.__doom_counter = 0
     ```
 
     ```python
@@ -164,21 +181,21 @@
             self.__hand = self.__player_deck.draw_cards(5)
 
             weakness_cards: list[Card] = list()
-            for i,card in enumerate(self.hand.copy()):
+            for i,card in enumerate(self.__hand.copy()):
                 while card.type == Card.TYPE.WEAKNESS:
                     weakness_cards.append(card)
-                    card = self.player_deck.draw_card()
-                self.hand[i] = card
+                    card = self.__player_deck.draw_card()
+                self.__hand[i] = card
             if weakness_cards:
-                self.player_deck.shuffle_cards_back(weakness_cards)
+                self.__player_deck.shuffle_cards_back(weakness_cards)
 
-        def mulligan(self, cards: list[Card]):
-            for set_aside in cards:
-                for i,card in enumerate(self.hand):
-                    if card == set_aside:
-                        self.hand[i] = self.player_deck.draw_card()
+        def mulligan(self, cards: list[str]):
+            for returned in cards:
+                for i,card in enumerate(self.__hand):
+                    if card.name == returned:
+                        self.__hand[i] = self.__player_deck.draw_card()
                         break
-            self.player_deck.shuffle_cards_back(cards)
+            self.__player_deck.shuffle_cards_back(cards)
 
         def make_lead_investigator(self):
             self.is_lead_investigator = True
@@ -192,7 +209,9 @@
         def __init__(self, model: ArkhamHorrorModel, name: str):
             self.model: ArkhamHorrorModel = model
             self.__name: str = name
-            self.__cards: deque[Card] = deque()
+            self.__cards: dict[Card] = dict()
+            self.__card_pile: deque[Card] = deque()
+            self.__discard_pile: deque[Card] = deque()
             self.__assemble_cards(self.model.get_deck_data(self.__name))
 
         @singledispatchmethod
@@ -203,17 +222,22 @@
         def __assemble_cards_with_list(self, deck_data: list):
             for name in deck_data:
                 card: Card = Card(self.model, name)
-                self.cards.append(card)
+                self.__cards.setdefault(name, card)
+                self.__card_pile.append(card)
 
         @__assemble_cards.register
         def __assemble_cards_with_dict(self, deck_data: dict):
             for name, quantity in deck_data.items():
                 card: Card = Card(self.model, name)
+                self.__cards.setdefault(name, card)
                 for _ in range(quantity):
-                    self.cards.append(card)
+                    self.__card_pile.append(card)
 
         def draw_card(self) -> Card:
-            return self.cards.pop()
+            return self.__card_pile.pop()
+
+        def discard_card(self, card_name: str):
+            self.__discard_pile.append(self.__cards[card_name])
     ```
 
     ```python
@@ -223,13 +247,13 @@
             self.shuffle()
 
         def shuffle(self):
-            random.shuffle(self.cards)
+            random.shuffle(self.__card_pile)
 
-        def shuffle_card_back(self, card: Card):
-            self.shuffle_cards_back([card])
+        def shuffle_card_back(self, card_name: str):
+            self.shuffle_cards_back([card_name])
 
-        def shuffle_cards_back(self, cards: list[Card]):
-            self.cards.extend(cards)
+        def shuffle_cards_back(self, card_names: list[str]):
+            self.__card_pile.extend([self.__cards[name] for name in card_names])
             self.shuffle()
 
         def draw_cards(self, num_cards) -> list[Card]:
@@ -267,11 +291,21 @@
 
     ```python
     class Location:
-        def __init__(self, model: ArkhamHorrorModel, name: str):
+        def __init__(
+            self,
+            model: ArkhamHorrorModel,
+            name: str,
+            is_played_at_start: bool,
+            shroud: int,
+            clue_count: int
+        ):
             self.model: ArkhamHorrorModel = model
             self.__name: str = name
-            self.__is_revealed: bool
-            self.__is_played_at_start: bool
+            self.__is_played_at_start: bool = is_played_at_start
+            self.__shroud: int = shroud
+            self.__clue_count: int = clue_count
+            self.is_revealed: bool = false
+            self.shroud_modifier: int = 0
     ```
 
     ```python
