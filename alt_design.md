@@ -28,17 +28,53 @@
 
     ```python
     class ArkhamHorror:
+        CLASS: str = "class"
+        COST: str = "cost"
+        LEVEL: str = "level"
+        TYPE: str = "type"
+        ICONS: str = "icons"
+        TRAITS: str = "traits"
+        SET: str = "set"
+        NUMBER: str = "number"
+        ENCOUNTER: str = "encounter"
+        IMAGE_FRONT: str = "image_front"
+        IMAGE_BACK: str = "image_back"
+
+        class TYPES:
+            INVESTIGATOR: str = "investigator"
+            ASSET: str = "asset"
+            TREACHERY: str = "treachery"
+            EVENT: str = "event"
+            SKILL: str = "skill"
+            ENEMY: str = "enemy"
+            SCENARIO: str = "scenario"
+            AGENDA: str = "agenda"
+            ACT: str = "act"
+            LOCATION: str = "location"
+
+        class __DECK_NAME:
+            ACT: str = "act"
+            AGENDA: str = "agenda"
+            ENCOUNTER: str = "encounter"
+
         def __init__(self):
-            self.__model: ArkhamHorrorModel = None
+            self.__model: ArkhamHorrorModel = ArkhamHorrorModel(self)
             self.__view: ArkhamHorrorView = ArkhamHorrorView(self)
 
         def start(self):
             campaign: str = self.__view.prompt_campaign()
             investigators: list[str] = self.__view.prompt_investigators()
             difficulty: str = self.__view.prompt_difficulty()
-            self.__model. = ArkhamHorrorModel(
-                self, campaign, difficulty, investigators
-            )
+            self.__model.set_info(campaign, difficulty, investigators)
+            self.__decks: dict = {
+                self.__DECK_NAME.ACT: self.__model.act_deck,
+                self.__DECK_NAME.AGENDA: self.__model.agenda_deck,
+                self.__DECK_NAME.ENCOUNTER: self.__model.encounter_deck
+            }
+            for name in investigators:
+                self.__decks.setdefault(
+                    name, self.__model.investigators[name].player_deck
+                )
 
         def __setup(self):
             self.__model.assemble_chaos_bag()
@@ -60,6 +96,11 @@
                 returned_cards: list[str] = self.__view.prompt_mulligan()
                 if returned_cards:
                     investigator.mulligan(returned_cards)
+
+        def handle_draw_card(self, name: str):
+            deck = self.__decks[name]
+            drawn_card = deck.draw_card()
+            self.__view.display_drawn_card(drawn_card.data)
     ```
 
     ```python
@@ -163,7 +204,7 @@
         def __init__(self, model: ArkhamHorrorModel, name: str):
             self.model: ArkhamHorrorModel = model
             self.__name: str = name
-            self.__player_deck: Deck = FullDeck(self.model, name)
+            self.player_deck: Deck = FullDeck(self.model, name)
             self.is_lead_investigator: bool = False
             self.__resource_pool: int = 0
             self.__hand: list[Card] = list()
@@ -179,24 +220,24 @@
             self.__resource_pool = max(0, self.__resource_pool - num_resources)
 
         def draw_opening_hand(self):
-            self.__hand = self.__player_deck.draw_cards(5)
+            self.__hand = self.player_deck.draw_cards(5)
 
             weakness_cards: list[Card] = list()
             for i,card in enumerate(self.__hand.copy()):
-                while card.type == Card.TYPE.TREACHERY:
+                while card.type == self.controller.TYPES.TREACHERY:
                     weakness_cards.append(card)
-                    card = self.__player_deck.draw_card()
+                    card = self.player_deck.draw_card()
                 self.__hand[i] = card
             if weakness_cards:
-                self.__player_deck.shuffle_cards_back(weakness_cards)
+                self.player_deck.shuffle_cards_back(weakness_cards)
 
         def mulligan(self, cards: list[str]):
             for returned in cards:
                 for i,card in enumerate(self.__hand):
                     if card.name == returned:
-                        self.__hand[i] = self.__player_deck.draw_card()
+                        self.__hand[i] = self.player_deck.draw_card()
                         break
-            self.__player_deck.shuffle_cards_back(cards)
+            self.player_deck.shuffle_cards_back(cards)
 
         def make_lead_investigator(self):
             self.is_lead_investigator = True
@@ -266,18 +307,6 @@
 
     ```python
     class Card:
-        class TYPE:
-            INVESTIGATOR: str = "investigator"
-            ASSET: str = "asset"
-            TREACHERY: str = "treachery"
-            EVENT: str = "event"
-            SKILL: str = "skill"
-            ENEMY: str = "enemy"
-            SCENARIO: str = "scenario"
-            AGENDA: str = "agenda"
-            ACT: str = "act"
-            LOCATION: str = "location"
-
         def __init__(self, model: ArkhamHorrorModel, name: str):
             self.model: ArkhamHorrorModel = model
             self.__name: str = name
@@ -293,6 +322,17 @@
             self.__encounter: str = card_data["encounter"] or None
             self.__image_name_front: str = card_data["image_front"]
             self.__image_name_back: str = card_data["image_back"]
+
+            self.__data: dict = {
+                "name": self.__name,
+                "type": self.__type,
+                "front": self.__image_name_front,
+                "back": self.__image_name_back
+            }
+
+        @property
+        def name(self) -> str:
+            return self.__name
 
         @property
         def type(self) -> str:
@@ -465,14 +505,16 @@
             for r in range(NUM_ROWS):
                 for c in range(NUM_COLS):
                     asset = AssetView(
-                        assets_frame, self.controller
+                        assets_frame,
+                        self.controller,
+                        self.controller.get_empty_card()
                     )
                     asset.grid(r, c)
 
         def __place_investigator_card(
             self, master: tk.Frame, investigator: str, row: int, col: int
         ):
-            investigator_card = CardView(
+            investigator_card = FlipCardView(
                 master,
                 self.controller,
                 self.controller.get_investigator_card(investigator)
@@ -512,6 +554,144 @@
                 self.controller.get_player_deck(investigator)
             )
             player_deck.grid(row, col)
+
+        def display_drawn_card(self, card_data: dict):
+            # show pop-up window with drawn card
+            drawn_card = DrawnCardWindow(self, self.controller, card_data)
+            drawn_card.show()
+    ```
+
+    ```python
+    class DrawnCardWindow(tk....):
+        def __init__(self, controller: ArkhamHorror, card_data: dict):
+            super().__init__()
+            card_view = CardView(self, controller, card_data)
+            card_view.grid()
+            if card_data[controller.TYPE] == controller.TYPES.ASSET:
+                # add "Add to Assets" button
+            if card_data[controller.TYPE] == controller.TYPES.ENEMY:
+                # add "Add to Threat Area" button
+            # add "Discard" button
+    ```
+
+    ```python
+    class CounterView(tk.Frame):
+        def __init__(
+            self, master: tk.Frame, controller: ArkhamHorror, start_value: int
+        ):
+            super().__init__(master)
+            self.controller: ArkhamHorror = controller
+            self.__START_VALUE: int = start_value
+
+            minus_button = tk.Button(
+                self,
+                command=self.__decrement
+            )
+            minus_button.grid()
+
+            self.__value = tk.StringVar()
+            value_window = tk.Entry(self, textvariable=self.__value)
+            value_window.grid()
+
+            plus_button = tk.Button(
+                self,
+                command=self.__increment
+            )
+
+            reset_button = tk.Button(
+                self,
+                command=self.__reset
+            )
+
+        def __modify_value(self, modifier: int):
+            value = int(self.__value.get())
+            self.__value.set(value + modifier)
+
+        def __decrement(self):
+            self.__modify_value(self, -1)
+
+        def __increment(self):
+            self.__modify_value(self, 1)
+
+        def __reset(self):
+            self.__value.set(self.__START_VALUE)
+    ```
+
+    ```python
+    class ChaosBagView(tk.Frame):
+        def __init__(self, master: tk.Frame, controller: ArkhamHorror, data):
+            super().__init__(master)
+            self.controller = controller
+
+            draw_token_button = tk.Button(
+                self,
+                text="Draw Token",
+                command=self.__draw_token
+            )
+            draw_token_button.grid()
+
+            self.__token_result = tk.StringVar()
+            token_result_window = tk.Entry(
+                self,
+                textvariable=self.__token_result
+            )
+            token_result_window.grid()
+
+        def __draw_token(self):
+            drawn_token = self.controller.draw_token()
+            self.__token_result.set(drawn_token)
+    ```
+
+    ```python
+    from PIL import Image, ImageTk
+
+
+    class CardView:
+        def __init__(
+            self, master: tk.Frame, controller: ArkhamHorror, data
+        ):
+            super().__init__(master)
+            self.controller = controller
+            front_path = data["front"]
+            front_image = ImageTk.PhotoImage(Image.open(front_path))
+            self.__card = tk.Label(self, image=front_image)
+            self.__images: list = [front_image]
+    ```
+
+    ```python
+    class FlipCardView(CardView):
+        def __init__(
+            self, master: tk.Frame, controller: ArkhamHorror, data
+        ):
+            super().__init__(master, controller)
+            back_path = data["back"]
+            back_image = ImageTk.PhotoImage(Image.open(back_path))
+            self.__images.append(back_image)
+            self.__flip_index: int = 0
+
+        def flip_card(self):
+            self.__flip_index = (self.__flip_index + 1) % 2
+            self.__card.configure(image=self.__images[self.__flip_index])
+    ```
+
+    ```python
+    class AssetView(CardView):
+        def __init__(self, master: tk.Frame, controller: ArkhamHorror):
+            super().__init__(master, controller)
+    ```
+
+    ```python
+    class DeckView(tk.Frame):
+        def __init__(self, master: tk.Frame, controller: ArkhamHorror, data):
+            super().__init__(master)
+            self.__name: str = data["name"]
+            card = FlipCardView(master, controller, data)
+            card.grid()
+            # add draw_card() to left click menu of commands
+            self.left_click_menu.append(self.__draw_card)
+
+        def __draw_card(self):
+            next_card = self.controller.handle_draw_card(self.__name)
     ```
 
     a. ...
