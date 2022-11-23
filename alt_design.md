@@ -48,6 +48,7 @@
             self.__model.play_locations()
             self.__model.assemble_aside_cards()
             self.__model.assemble_encounter_deck()
+            self.__view.load_play_area()
             self.__view.notify_begin_game()
 
         def __set_up_investigators(self):
@@ -337,17 +338,17 @@
     ```
 
     ```python
-    class ArkhamHorrorView:
+    class ArkhamHorrorView(tk.Tk):
         def __init__(self, controller: ArkhamHorror):
             self.controller: ArkhamHorror = controller
-            ...
+            self.__load_play_area()
 
         def prompt_campaign(self) -> str:
-            campaign = ...
+            self.campaign = ...
             return campaign
 
         def prompt_investigators(self) -> list[str]:
-            investigators = ...
+            self.investigators = ...
             return investigators
 
         def prompt_difficulty(self) -> str:
@@ -361,13 +362,156 @@
             ...
             choice: str = ...
             ...
-            return difficulties[choice]
+            self.difficulty: str = difficulties[choice]
+            return self.difficulty
 
         def prompt_mulligan(self):
             ...
 
         def notify_begin_game(self):
             ...
+
+        def load_play_area(self):
+            self.__place_scenario_card(row, col)
+            self.__place_act_deck(row, col)
+            self.__place_agenda_deck(row, col)
+            self.__place_doom_counter(row, col)
+            self.__place_encounter_deck(row, col)
+            self.__place_locations(row, col)
+            self.__place_chaos_bag(row, col)
+            self.__place_threat_area(row, col)
+            self.__place_investigator_play_areas(row, col)
+
+        def __place_scenario_card(self, row: int, col: int):
+            scenario_card_view = CardView(
+                self,
+                self.controller,
+                self.controller.get_scenario_card()
+            )
+            scenario_card_view.grid(row, col)
+
+        def __place_act_deck(self, row: int, col: int):
+            act_deck_view = DeckView(
+                self, self.controller, self.controller.get_act_deck()
+            )
+            act_deck_view.grid(row, col)
+
+        def __place_agenda_deck(self, row: int, col: int):
+            agenda_deck_view = DeckView(
+                self, self.controller, self.controller.get_agenda_deck()
+            )
+            agenda_deck_view.grid(row, col)
+
+        def __place_doom_counter(self, row: int, col: int):
+            doom_counter = CounterView(
+                self, self.controller, self.controller.get_doom_counter()
+            )
+            doom_counter.grid(row, col)
+
+        def __place_encounter_deck(self, row: int, col: int):
+            encounter_deck = FullDeckView(
+                self,
+                self.controller,
+                self.controller.get_encounter_deck()
+            )
+            encounter_deck.grid(row, col)
+
+        def __place_locations(self, row: int, col: int):
+            # lay out frame of grid of tiles to play locations in
+            locations_frame = tk.Frame(self)
+            ...
+            locations_frame.grid(row, col)
+
+        def __place_chaos_bag(self, row: int, col: int):
+            chaos_bag = ChaosBagView(
+                self, self.controller, self.controller.get_chaos_bag()
+            )
+            chaos_bag.grid(row, col)
+
+        def __place_threat_area(self, row: int, col: int):
+            # lay out frame of grid of tiles to play enemies in
+            threat_area_frame = tk.Frame(self)
+            threat_area_frame.grid(row, col)
+            ...
+
+        def __place_investigator_play_areas(self, row, col):
+            # lay out frame of tabs (one tab per investigator)
+            investigators_frame = tk.Frame(self)
+            investigators_frame.grid(row, col)
+
+            for investigator in self.investigators:
+                self.__place_investigator_play_area(
+                    investigators_frame, investigator
+                )
+
+        def __place_investigator_play_area(
+            self, master: tk.Frame, investigator: str
+        ):
+            self.__place_assets(master, investigator, row, col)
+            self.__place_investigator_card(
+                master, investigator, row, col
+            )
+            self.__place_player_counters(master, investigator, row, col)
+            self.__place_player_deck(master, investigator, row, col)
+
+        def __place_assets(
+            self, master: tk.Frame, investigator: str, row: int, col: int
+        ):
+            assets_frame = tk.Frame(master)
+            assets_frame.grid(row, col)
+
+            NUM_ROWS: int = 2
+            NUM_COLS: int = 4
+            for r in range(NUM_ROWS):
+                for c in range(NUM_COLS):
+                    asset = AssetView(
+                        assets_frame, self.controller
+                    )
+                    asset.grid(r, c)
+
+        def __place_investigator_card(
+            self, master: tk.Frame, investigator: str, row: int, col: int
+        ):
+            investigator_card = CardView(
+                master,
+                self.controller,
+                self.controller.get_investigator_card(investigator)
+            )
+            investigator_card.grid(row, col)
+
+        def __place_player_counters(
+            self, master: tk.Frame, investigator: str, row: int, col: int
+        ):
+            counters_frame = tk.Frame(master)
+            counters_frame.grid(row, col)
+            resources_counter = CounterView(
+                counters_frame,
+                self.controller,
+                self.controller.get_investigator_resources(investigator)
+            )
+            resources_counter.grid()
+            health_counter = CounterView(
+                counters_frame,
+                self.controller,
+                self.controller.get_investigator_health(investigator)
+            )
+            health_counter.grid()
+            sanity_counter = CounterView(
+                counters_frame,
+                self.controller,
+                self.controller.get_investigator_sanity(investigator)
+            )
+            sanity_counter.grid()
+
+        def __place_player_deck(
+            self, master: tk.Frame, investigator: str, row: int, col: int
+        ):
+            player_deck = FullDeckView(
+                master,
+                self.controller,
+                self.controller.get_player_deck(investigator)
+            )
+            player_deck.grid(row, col)
     ```
 
     a. ...
