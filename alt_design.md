@@ -54,7 +54,7 @@
         def __set_up_investigators(self):
             lead_investigator: str = self.__view.prompt_lead_investigator()
             for name,investigator in self.__model.investigators.items():
-                investigator.lead_investigator = name == lead_investigator
+                investigator.is_lead_investigator = name == lead_investigator
                 investigator.gain_resources(5)
                 investigator.draw_opening_hand()
                 if self.__view.prompt_mulligan():
@@ -161,7 +161,7 @@
             self.__resource_pool = max(0, self.__resource_pool - num_resources)
 
         def draw_opening_hand(self):
-            self.hand = self.player_deck.draw_cards(5)
+            self.hand = self.__player_deck.draw_cards(5)
 
             weakness_cards: list[Card] = list()
             for i,card in enumerate(self.hand.copy()):
@@ -189,15 +189,29 @@
     ```
 
     ```python
+    from functools import singledispatchmethod
+
+
     class Deck:
         def __init__(self, model: ArkhamHorrorModel, name: str):
             self.model: ArkhamHorrorModel = model
             self.__name: str = name
             self.__cards: deque[Card] = deque()
-            self.__assemble_cards()
+            self.__assemble_cards(self.model.get_deck_data(self.__name))
 
-        def __assemble_cards(self):
-            for name in self.model.get_deck_data(self.__name):
+        @singledispatchmethod
+        def __assemble_cards(self, deck_data):
+            raise NotImplementedError
+
+        @__assemble_cards.register
+        def __assemble_cards_with_list(self, deck_data: list):
+            for name in deck_data:
+                card: Card = Card(self.model, name)
+                self.cards.append(card)
+
+        @__assemble_cards.register
+        def __assemble_cards_with_dict(self, deck_data: dict):
+            for name, quantity in deck_data.items():
                 card: Card = Card(self.model, name)
                 for _ in range(quantity):
                     self.cards.append(card)
@@ -207,16 +221,10 @@
     ```
 
     ```python
-    class RegularDeck(Deck):
+    class FullDeck(Deck):
         def __init__(self, model: ArkhamHorror, name: str):
             super().__init__(model, name)
             self.shuffle()
-
-        def __assemble_cards(self):
-            for name, quantity in self.model.get_deck_data(self.__name).items():
-                card: Card = Card(self.model, name)
-                for _ in range(quantity):
-                    self.cards.append(card)
 
         def shuffle(self):
             random.shuffle(self.cards)
