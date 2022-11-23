@@ -182,7 +182,7 @@
 
             weakness_cards: list[Card] = list()
             for i,card in enumerate(self.__hand.copy()):
-                while card.type == Card.TYPE.WEAKNESS:
+                while card.type == Card.TYPE.TREACHERY:
                     weakness_cards.append(card)
                     card = self.__player_deck.draw_card()
                 self.__hand[i] = card
@@ -266,7 +266,16 @@
     ```python
     class Card:
         class TYPE:
-            WEAKNESS: str = "weakness"
+            INVESTIGATOR: str = "investigator"
+            ASSET: str = "asset"
+            TREACHERY: str = "treachery"
+            EVENT: str = "event"
+            SKILL: str = "skill"
+            ENEMY: str = "enemy"
+            SCENARIO: str = "scenario"
+            AGENDA: str = "agenda"
+            ACT: str = "act"
+            LOCATION: str = "location"
 
         def __init__(self, model: ArkhamHorrorModel, name: str):
             self.model: ArkhamHorrorModel = model
@@ -290,7 +299,7 @@
     ```
 
     ```python
-    class Location:
+    class Location(Card):
         def __init__(
             self,
             model: ArkhamHorrorModel,
