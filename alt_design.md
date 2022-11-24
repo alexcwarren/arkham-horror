@@ -440,13 +440,13 @@
 
         def __place_act_deck(self, row: int, col: int):
             act_deck_view = DeckView(
-                self, self.controller, self.controller.get_act_deck()
+                self, self.controller, self.controller.get_act_deck(), true
             )
             act_deck_view.grid(row, col)
 
         def __place_agenda_deck(self, row: int, col: int):
             agenda_deck_view = DeckView(
-                self, self.controller, self.controller.get_agenda_deck()
+                self, self.controller, self.controller.get_agenda_deck(), true
             )
             agenda_deck_view.grid(row, col)
 
@@ -598,6 +598,7 @@
                 command=handle_discard
             )
             discard_button.grid()
+            # add "To Bottom of Deck" button
     ```
 
     ```python
@@ -695,7 +696,7 @@
             self.__images.append(back_image)
             self.__flip_index: int = 0
 
-        def flip_card(self):
+        def __flip_card(self):
             self.__flip_index = (self.__flip_index + 1) % 2
             self.__card.configure(image=self.__images[self.__flip_index])
     ```
@@ -704,20 +705,56 @@
     class AssetView(CardView):
         def __init__(self, master: tk.Frame, controller: ArkhamHorror):
             super().__init__(master, controller)
+            # add left-click menu commands
+            self.left_click_menu.append(self.__add_supply_counter)
+            self.left_click_menu.append(self.__add_health_counter)
+            self.left_click_menu.append(self.__add_sanity_counter)
+    ```
+
+    ```python
+    class ThreatView(CardView):
+        def __init__(self, master: tk.Frame, controller: ArkhamHorror):
+            super().__init__(master, controller)
+            # add left-click menu commands
+            self.left_click_menu.append(self.__add_health_counter)
+            self.left_click_menu.append(self.__add_sanity_counter)
+            self.left_click_menu.append(self.__add_clue_counter)
+            self.left_click_menu.append(self.__add_resource_counter)
     ```
 
     ```python
     class DeckView(tk.Frame):
-        def __init__(self, master: tk.Frame, controller: ArkhamHorror, data):
+        def __init__(
+                self,
+                master: tk.Frame,
+                controller: ArkhamHorror,
+                data,
+                is_flippable: bool
+            ):
             super().__init__(master)
             self.__name: str = data["name"]
-            card = FlipCardView(master, controller, data)
+            card = None
+            if is_flippable:
+                card = FlipCardView(master, controller, data)
+            else:
+                card = CardView(master, controller, data)
             card.grid()
             # add draw_card() to left click menu of commands
             self.left_click_menu.append(self.__draw_card)
+            self.left_click_menu.append(self.__select_from_discard_pile)
+            self.left_click_menu.append(self.__remove_discard_pile)
+            self.left_click_menu.append(self.__search_top_3)
 
         def __draw_card(self):
             next_card = self.controller.handle_draw_card(self.__name)
+    ```
+
+    ```python
+    class FullDeckView(DeckView):
+        def __init__(self, master: tk.Frame, controller: ArkhamHorror, data):
+            super().__init__(master, controller, data, false)
+            # add additional commands to left click menu
+            self.left_click_menu.append(self.__shuffle)
     ```
 
     a. ...
