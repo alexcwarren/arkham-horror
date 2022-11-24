@@ -78,7 +78,9 @@
 
         def __setup(self):
             self.__model.assemble_chaos_bag()
-            self.__set_up_investigators()
+            self.__model.set_up_investigators(
+                self.__view.prompt_lead_investigator()
+            )
             self.__model.assemble_agenda_deck()
             self.__model.assemble_act_deck()
             self.__model.play_locations()
@@ -87,15 +89,8 @@
             self.__view.load_play_area()
             self.__view.notify_begin_game()
 
-        def __set_up_investigators(self):
-            lead_investigator: str = self.__view.prompt_lead_investigator()
-            for name,investigator in self.__model.investigators.items():
-                investigator.is_lead_investigator = name == lead_investigator
-                investigator.gain_resources(5)
-                investigator.draw_opening_hand()
-                returned_cards: list[str] = self.__view.prompt_mulligan()
-                if returned_cards:
-                    investigator.mulligan(returned_cards)
+        def prompt_mulligan(self) -> list[str]:
+            return self.__view.prompt_mulligan()
 
         def handle_draw_card(self, deck_name: str):
             deck = self.__decks[deck_name]
@@ -132,6 +127,15 @@
             self.__create_investigators(investigators)
             self.__chaos_bag: ChaosBag = None
             self.__doom_counter: int = 0
+
+        def set_up_investigators(self, lead_investigator: str):
+            for name,investigator in self.investigators.items():
+                investigator.is_lead_investigator = name == lead_investigator
+                investigator.gain_resources(5)
+                investigator.draw_opening_hand()
+                returned_cards: list[str] = self.controller.prompt_mulligan()
+                if returned_cards:
+                    investigator.mulligan(returned_cards)
 
         def get_token_data(self, difficulty: str) -> dict:
             return self.__token_data.get(difficulty)
