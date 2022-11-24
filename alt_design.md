@@ -97,10 +97,14 @@
                 if returned_cards:
                     investigator.mulligan(returned_cards)
 
-        def handle_draw_card(self, name: str):
-            deck = self.__decks[name]
+        def handle_draw_card(self, deck_name: str):
+            deck = self.__decks[deck_name]
             drawn_card = deck.draw_card()
-            self.__view.display_drawn_card(drawn_card.data)
+            self.__view.display_drawn_card(drawn_card.data, deck_name)
+
+        def handle_discard(self, deck_name: str, card_name: str):
+            deck = self.__decks[deck_name]
+            deck.discard_card(card_name)
     ```
 
     ```python
@@ -555,15 +559,22 @@
             )
             player_deck.grid(row, col)
 
-        def display_drawn_card(self, card_data: dict):
+        def display_drawn_card(self, card_data: dict, deck_name: str):
             # show pop-up window with drawn card
-            drawn_card = DrawnCardWindow(self, self.controller, card_data)
+            drawn_card = DrawnCardWindow(
+                self, self.controller, card_data, deck_name
+            )
             drawn_card.show()
     ```
 
     ```python
-    class DrawnCardWindow(tk....):
-        def __init__(self, controller: ArkhamHorror, card_data: dict):
+    from functools import partial
+
+
+    class DrawnCardWindow(tk...):
+        def __init__(
+                self, controller: ArkhamHorror, card_data: dict, deck_name: str
+            ):
             super().__init__()
             card_view = CardView(self, controller, card_data)
             card_view.grid()
@@ -572,6 +583,17 @@
             if card_data[controller.TYPE] == controller.TYPES.ENEMY:
                 # add "Add to Threat Area" button
             # add "Discard" button
+            handle_discard = partial(
+                self.controller.handle_discard,
+                deck_name,
+                card_data[self.controller.NAME]
+            )
+            discard_button = tk.Button(
+                self,
+                text="Discard",
+                command=handle_discard
+            )
+            discard_button.grid()
     ```
 
     ```python
