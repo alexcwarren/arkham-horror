@@ -3,6 +3,7 @@ import random
 import tkinter as tk
 from functools import partial
 from tkinter import ttk
+from components.custom_widgets import DisabledEntry
 
 
 class ChaosBag(tk.Tk):
@@ -42,14 +43,11 @@ class ChaosBag(tk.Tk):
         __result_window_frame = ttk.Frame(self)
         __result_window_frame.pack(pady=15)
         self.__result_value = tk.StringVar()
-        __result_window = tk.Entry(
+        __result_window = DisabledEntry(
             __result_window_frame,
             textvariable=self.__result_value,
-            disabledbackground="white",
-            disabledforeground="black",
             width=25,
-            justify=tk.CENTER,
-            state=tk.DISABLED,
+            justify=tk.CENTER
         )
         __result_window.pack()
 
