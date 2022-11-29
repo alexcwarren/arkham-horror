@@ -1,4 +1,7 @@
 import json
+import tkinter as tk
+
+import components.custom_widgets as custom_widgets
 
 
 def __get_deck(key: str):
@@ -18,3 +21,9 @@ def get_agendadeck(campaign: str, partname: str):
 if __name__ == "__main__":
     playerdeck = get_playerdeck("Roland Banks")
     print(playerdeck)
+
+    main = tk.Tk()
+    main.geometry("250x50")
+    entry = custom_widgets.DisabledEntry(main)
+    entry.pack()
+    main.mainloop()
