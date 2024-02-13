@@ -18,15 +18,15 @@
   ],
   "difficulties": {
     "Easy": {
-      "+1": 1,
-      "0": 2,
-      "-1": 3,
-      "-2": 2,
-      "Skull": 2,
-      "Cultist": 1,
-      "Tablet": 1,
-      "Auto Fail": 1,
-      "Elder Sign": 1
+      "+1": "1",
+      "0": "2",
+      "-1": "3",
+      "-2": "2",
+      "Skull": "2",
+      "Cultist": "1",
+      "Tablet": "1",
+      "Auto Fail": "1",
+      "Elder Sign": "1"
     },
     "Standard": {},
     "Hard": {},
