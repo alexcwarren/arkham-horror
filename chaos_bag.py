@@ -9,7 +9,7 @@ import components.custom_widgets as custom_widgets
 
 class ChaosBag(tk.Tk):
     def __init__(
-        self, token_quantities: dict[str, int], special_values: dict[str, str]
+        self, token_quantities: dict[str, str], special_values: dict[str, str]
     ):
         self.__unique_tokens: list[str] = sorted(
             set(list(token_quantities.keys()) + list(special_token_values.keys()))
@@ -17,9 +17,9 @@ class ChaosBag(tk.Tk):
         self.__max_token_width: int = max(len(token) for token in self.__unique_tokens)
 
         self.__token_percentages: dict[str, float] = dict()
-        total: int = sum(count for count in token_quantities.values())
+        total: int = sum(int(count) for count in token_quantities.values())
         for token in self.__unique_tokens:
-            self.__token_percentages[token] = token_quantities[token] / total * 100
+            self.__token_percentages[token] = int(token_quantities[token]) / total * 100
 
         self.__token_values: dict[str, str] = dict()
         for token in self.__unique_tokens:
@@ -136,7 +136,7 @@ class ChaosBag(tk.Tk):
             count = samples[token]
             print(f"{token :{self.__max_token_width}s}:", end="")
             print(f"{count :{max_count_width}d}", end="")
-            print(f"({count/num_samples*100 :5.2f}%)", end="")
+            print(f"({count / num_samples * 100 :5.2f}%)", end="")
             print("*" * (count // unit))
 
 
@@ -189,16 +189,6 @@ if __name__ == "__main__":
         special_token_values = chaos_data["scenarios"][part]
 
     chaos_bag = ChaosBag(chaos_token_quantities, special_token_values)
-
-    # print("Odds:")
-    # chaos_bag.print_odds()
-    # print()
-
-    # print("Simulation:")
-    # chaos_bag.simulate_odds(30_000)
-    # print()
-
     chaos_bag.mainloop()
-
     chaos_bag.print_odds()
     print()
