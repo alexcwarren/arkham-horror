@@ -4,7 +4,7 @@ import tkinter as tk
 from functools import partial
 from tkinter import ttk
 
-import components.custom_widgets as custom_widgets
+import custom_widgets
 
 
 class ChaosBag(tk.Tk):
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     chaos_token_quantities = dict()
     special_token_values = dict()
-    with open("./data/chaos-tokens.json", "r") as read_file:
+    with open("../data/chaos-tokens.json", "r") as read_file:
         chaos_data = json.load(read_file)
         chaos_token_quantities = chaos_data["difficulties"][difficulty]
         special_token_values = chaos_data["scenarios"][part]
