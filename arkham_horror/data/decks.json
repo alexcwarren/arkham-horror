@@ -1,0 +1,88 @@
+{
+  "Roland Banks": {
+    "Roland Banks: The Fed": 1,
+    "Roland's .38 Special": 1,
+    "Cover Up": 1,
+    ".45 Automatic": 1,
+    "Physical Training": 1,
+    "Beat Cop": 1,
+    "First Aid": 1,
+    "Machete": 1,
+    "Guard Dog": 1,
+    "Evidence!": 1,
+    "Dodge": 1,
+    "Dynamite Blast": 1,
+    "Vicious Blow": 1,
+    "Magnifying Glass": 1,
+    "Old Book of Lore": 1,
+    "Research Librarian": 1,
+    "Dr. Milan Christopher: Professor of Entomology": 1,
+    "Hyperawareness": 1,
+    "Medical Texts": 1,
+    "Mind over Matter": 1,
+    "Working a Hunch": 1,
+    "Barricade": 1,
+    "Deduction": 1,
+    "Knife": 2,
+    "Flashlight": 2,
+    "Emergency Cache": 2,
+    "Guts": 2,
+    "Manual Dexterity": 2,
+    "Paranoia": 1
+  },
+  "The Gathering - Agenda": [
+    "What's Going On?!",
+    "Rise of the Ghouls",
+    "They're Getting Out!"
+  ],
+  "The Gathering - Act": [
+    "Trapped",
+    "The Barrier",
+    "What Have You Done?"
+  ],
+  "The Gathering - Locations": {
+    "Study": {
+      "is_played_at_start": true,
+      "clue_count": 2,
+      "shroud": 2
+    },
+    "Hallway": {
+      "is_played_at_start": false,
+      "clue_count": 0,
+      "shroud": 1
+    },
+    "Attic": {
+      "is_played_at_start": false,
+      "clue_count": 2,
+      "shroud": 1
+    },
+    "Cellar": {
+      "is_played_at_start": false,
+      "clue_count": 2,
+      "shroud": 4
+    },
+    "Parlor": {
+      "is_played_at_start": false,
+      "clue_count": 0,
+      "shroud": 2
+    }
+  },
+  "The Gathering - Aside": [
+    "Ghoul Priest",
+    "Lita Chantler: The Zealot"
+  ],
+  "The Gathering - Encounter": {
+    "Flesh-Eater": 1,
+    "Icy Ghoul": 1,
+    "Swarm of Rats": 3,
+    "Ghoul Minion": 3,
+    "Ravenous Ghoul": 1,
+    "Grasping Hands": 3,
+    "Rotting Remains": 3,
+    "Frozen in Fear": 2,
+    "Dissonant Voices": 2,
+    "Ancient Evils": 3,
+    "Crypt Chill": 2,
+    "Obscuring Fog": 2
+  }
+}
