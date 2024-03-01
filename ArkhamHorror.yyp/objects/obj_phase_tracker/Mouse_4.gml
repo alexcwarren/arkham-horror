@@ -1,3 +1,6 @@
+/// @desc	Advance phase
+
+
 phase_curr = (phase_curr + 1) % num_subimgs;
 
 if (phase_curr == PHASE_STATE.MYTHOS) {

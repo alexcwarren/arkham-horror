@@ -1,3 +1,6 @@
+/// @desc		
+
+
 num_subimgs = sprite_get_number(sprite_index);
 
 enum PHASE_STATE {
