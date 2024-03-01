@@ -1,0 +1,1 @@
+draw_sprite(sprite_index, phase_curr, x, y);
