@@ -12,12 +12,12 @@ view = new DrawDeckView(
 	obj_card_player,
 	_width,
 	_height,
-	global.direction_x.left,
-	global.direction_y.same,
+	global.direction_x.same,
+	global.direction_y.above,
 	10,
 	true,
-	global.direction_x.same,
-	global.direction_y.below
+	global.direction_x.right,
+	global.direction_y.same
 );
 
 
