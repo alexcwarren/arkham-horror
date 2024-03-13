@@ -1,4 +1,4 @@
-var ChaosBag = function(
+function ChaosBag(
 	_num_plus_1,
 	_num_0,
 	_num_minus_1,
@@ -31,22 +31,22 @@ var ChaosBag = function(
 	token_counts[? "Elder Sign"] = _num_elder_sign;
 }
 
-//                                +1  0 -1 -2 -3 -4 -5 -6 -8 Sk Cu Ta AF ES
-var _chaos_bag_easy = new ChaosBag(2, 3, 3, 2, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1);
-var _chaos_bag_strd = new ChaosBag(1, 2, 3, 2, 1, 1, 0, 0, 0, 2, 1, 1, 1, 1);
-var _chaos_bag_hard = new ChaosBag(0, 3, 2, 2, 2, 1, 1, 0, 0, 2, 1, 1, 1, 1);
-var _chaos_bag_expt = new ChaosBag(0, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 1, 1);
 
-chaos_bags = ds_map_create();
-chaos_bags[? global.difficulties.easy] = _chaos_bag_easy;
-chaos_bags[? global.difficulties.standard] = _chaos_bag_strd;
-chaos_bags[? global.difficulties.hard] = _chaos_bag_hard;
-chaos_bags[? global.difficulties.expert] = _chaos_bag_expt;
+function create_chaos_bag() {
+	//                                +1  0 -1 -2 -3 -4 -5 -6 -8 Sk Cu Ta AF ES
+	var _chaos_bag_easy = new ChaosBag(2, 3, 3, 2, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1);
+	var _chaos_bag_strd = new ChaosBag(1, 2, 3, 2, 1, 1, 0, 0, 0, 2, 1, 1, 1, 1);
+	var _chaos_bag_hard = new ChaosBag(0, 3, 2, 2, 2, 1, 1, 0, 0, 2, 1, 1, 1, 1);
+	var _chaos_bag_expt = new ChaosBag(0, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 1, 1);
 
+	chaos_bags = ds_map_create();
+	chaos_bags[? global.difficulties.easy] = _chaos_bag_easy;
+	chaos_bags[? global.difficulties.standard] = _chaos_bag_strd;
+	chaos_bags[? global.difficulties.hard] = _chaos_bag_hard;
+	chaos_bags[? global.difficulties.expert] = _chaos_bag_expt;
 
-
-global.chaos_bag = chaos_bags[? global.difficulty];
-
+	global.chaos_bag = chaos_bags[? global.difficulty];
+}
 
 
 function draw_chaos_token() {

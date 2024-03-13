@@ -40,6 +40,7 @@ function CardView(_deck_obj, _use_smalls, _can_rotate, _card_id=0) constructor {
 	__can_rotate = _can_rotate;
 	__card_id = _card_id;
 	
+	__depth = 0;
 	__rotated_state = ROTATED_STATE.UPRIGHT;
 	
 	/// @func	get_deck_object()
@@ -68,6 +69,20 @@ function CardView(_deck_obj, _use_smalls, _can_rotate, _card_id=0) constructor {
 	/// @return	{Real}
 	get_card_id = function() {
 		return __card_id;
+	}
+	
+	/// @func	get_depth()
+	/// @desc	Get this card's depth value.
+	/// @return	{Real}
+	get_depth = function() {
+		return __depth;
+	}
+	
+	/// @func	set_depth(_depth)
+	/// @desc	Set this card's depth value.
+	/// @arg	{Real}	_depth
+	set_depth = function(_depth) {
+		__depth = _depth;
 	}
 	
 	/// @func	can_rotate()

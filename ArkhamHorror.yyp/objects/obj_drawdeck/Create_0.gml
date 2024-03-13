@@ -24,8 +24,11 @@ draw_card_from_deck = function(_num_cards=1) {
 		//// view
 		var _x = x + view.drawn_card_offset_x();
 		var _y = y + view.drawn_card_offset_y();
-		var _card_inst = instance_create_depth(_x, _y, -_i, view.get_card_obj());
+		//var _depth = 200 + _i;
+		//var _card_inst = instance_create_depth(_x, _y, _depth, view.get_card_obj());
+		var _card_inst = instance_create_layer(_x, _y, "CardInstances", view.get_card_obj());
 		_card_inst.view.set_card_id(_drawn_card_id);
+		//_card_inst.view.set_depth(_depth);
 	}
 }
 

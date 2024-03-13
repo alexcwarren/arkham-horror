@@ -10,12 +10,12 @@ view = new DrawDeckView(
 	obj_card_encounter,
 	sprite_get_width(sprite_index),
 	sprite_get_height(sprite_index),
-	global.direction_x.same,
-	global.direction_y.above,
+	global.direction_x.right,
+	global.direction_y.same,
 	10,
 	true,
-	global.direction_x.left,
-	global.direction_y.same
+	global.direction_x.same,
+	global.direction_y.below
 );
 
 

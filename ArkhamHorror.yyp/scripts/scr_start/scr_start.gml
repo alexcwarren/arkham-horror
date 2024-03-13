@@ -13,6 +13,7 @@ function start() {
 	};
 	global.difficulty = global.difficulties.easy;
 	
+	create_chaos_bag();
 	
 	global.starting_counts = {
 		"resources": 5,
@@ -21,7 +22,6 @@ function start() {
 		"actions": 3,
 	};
 	
-	
 	global.is_object_active = false;
 	
 	load_card_data();
@@ -29,6 +29,8 @@ function start() {
 	load_campaign_data();
 	
 	global.player_drawdeck_curr = obj_drawdeck_player;
+	
+	global.draw_order_mgr = new DrawOrderManager();
 	
 	randomize();
 }
